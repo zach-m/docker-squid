@@ -1,73 +1,49 @@
 # zachm/squid
 
-# Getting started
+## Docker Installation
 
-## Installation
+Install `docker` according to the [online documentation](https://docs.docker.com/engine/installation/).
 
+## Squid Installation
+
+Download this repository:
 ```bash
-docker pull zachm/squid
+git clone https://github.com/zach-m/docker-squid.git
 ```
 
-## Quickstart
-
-Start Squid using:
-
+Setup username and password for the proxy:
 ```bash
-docker run --name squid -d --restart=always \
-  --publish 3128:3128 \
-  --volume /srv/docker/squid/cache:/var/spool/squid3 \
-  zachm/squid
+sudo apt-get install apache2-utils
+mkdir /var/squid3
+cp docker-squid/squid.conf /var/squid3
+htpasswd -c /var/squid3/passwords username
 ```
 
-*Alternatively, you can use the sample [docker-compose.yml](docker-compose.yml) file to start the container using [Docker Compose](https://docs.docker.com/compose/)*
-
-## Command-line arguments
-
-You can customize the launch command of the Squid server by specifying arguments to `squid3` on the `docker run` command. For example the following command prints the help menu of `squid3` command:
-
+Build the docker:
 ```bash
-docker run --name squid -it --rm \
-  --publish 3128:3128 \
-  --volume /srv/docker/squid/cache:/var/spool/squid3 \
-  zachm/squid -h
+docker build -t zachm/squid docker-squid/
 ```
 
-## Configuration
-
-Squid is a full featured caching proxy server and a large number of configuration parameters. To configure Squid as per your requirements edit the default [squid.conf](squid.conf) and volume mount it at `/etc/squid3/squid.conf`.
+## Running the docker as an auto-restart daemon
 
 ```bash
 docker run --name squid -d --restart=always \
   --publish 3128:3128 \
-  --volume /path/to/squid.conf:/etc/squid3/squid.conf \
+  --volume /var/squid3/squid.conf:/etc/squid3/squid.conf \
+  --volume /var/squid3/passwords:/etc/squid3/passwords \
   --volume /srv/docker/squid/cache:/var/spool/squid3 \
   zachm/squid
 ```
 
-To reload the Squid configuration on a running instance you can send the `HUP` signal to the container.
+## Changing configuration
 
+Edit the configuration files at (your local folder):
+``` bash
+/var/squid3
+```
+Restart the docker
 ```bash
 docker kill -s HUP squid
-```
-
-## Usage
-
-Configure your web browser network/connection settings to use the proxy server which is available at `172.17.42.1:3128`
-
-If you are using Linux then you can also add the following lines to your `.bashrc` file allowing command line applications to use the proxy server for outgoing connections.
-
-```bash
-export ftp_proxy=http://172.17.42.1:3128
-export http_proxy=http://172.17.42.1:3128
-export https_proxy=http://172.17.42.1:3128
-```
-
-To use Squid in you Docker containers add the following line to your `Dockerfile`.
-
-```dockerfile
-ENV http_proxy=http://172.17.42.1:3128 \
-    https_proxy=http://172.17.42.1:3128 \
-    ftp_proxy=http://172.17.42.1:3128
 ```
 
 ## Logs
@@ -77,10 +53,6 @@ To access the Squid logs, located at `/var/log/squid3/`, you can use `docker exe
 ```bash
 docker exec -it squid tail -f /var/log/squid3/access.log
 ```
-
-You can also mount a volume at `/var/log/squid3/` so that the logs are directly accessible on the host.
-
-# Maintenance
 
 ## Shell Access
 
